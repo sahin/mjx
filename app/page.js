@@ -210,6 +210,52 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Image Showcase ──────────────────────────────────────── */}
+      <section style={{ padding: '0 2rem 5rem', maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.7rem', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>Live Previews</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
+          {[
+            { src: '/images/target-swiftui.png', label: 'SwiftUI Engine', color: '#f5a623' },
+            { src: '/images/target-chatbot.png', label: 'Chatbot (Rust/WASM)', color: '#ef5350' },
+            { src: '/images/target-api-go.png', label: 'API (Go)', color: '#26c6da' },
+          ].map((img) => (
+            <div key={img.src} style={{ borderRadius: '8px', overflow: 'hidden', border: `1px solid ${img.color}22`, position: 'relative' }}>
+              <img src={img.src} alt={img.label} style={{ width: '100%', display: 'block' }} />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.85))', padding: '1rem 0.85rem 0.75rem', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: img.color }}>
+                {img.label}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+          {[
+            { src: '/images/target-web-rust.png', label: 'Web App (Rust/WASM)', color: '#ab47bc' },
+            { src: '/images/target-swift-backend.png', label: 'Backend (Swift/Vapor)', color: '#4fc3f7' },
+          ].map((img) => (
+            <div key={img.src} style={{ borderRadius: '8px', overflow: 'hidden', border: `1px solid ${img.color}22`, position: 'relative' }}>
+              <img src={img.src} alt={img.label} style={{ width: '100%', display: 'block' }} />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.85))', padding: '1rem 0.85rem 0.75rem', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: img.color }}>
+                {img.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Playground CTA ──────────────────────────────────────── */}
+      <section style={{ padding: '4rem 2rem', background: 'var(--surface)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.7rem', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '1rem' }}>Live Compiler</div>
+          <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '2rem', letterSpacing: '-0.03em', color: '#fff', margin: '0 0 1rem' }}>Try it in your browser</h2>
+          <p style={{ color: '#666', lineHeight: 1.7, marginBottom: '2rem', fontSize: '0.9rem', fontFamily: 'IBM Plex Sans, sans-serif' }}>
+            The MJX Playground lets you type a plain English description and compile it to any of the five target languages in real time — no installation required.
+          </p>
+          <Link href="/playground" style={{ background: 'var(--accent)', color: '#000', padding: '0.75rem 1.75rem', borderRadius: '4px', textDecoration: 'none', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: '0.88rem', letterSpacing: '0.05em' }}>
+            Open Playground →
+          </Link>
+        </div>
+      </section>
+
       {/* ── Terminal Demo ───────────────────────────────────────── */}
       <section style={{ padding: '0 2rem 5rem', maxWidth: '1100px', margin: '0 auto' }}>
         <div style={{

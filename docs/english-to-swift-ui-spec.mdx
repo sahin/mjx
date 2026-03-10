@@ -1,203 +1,160 @@
 ---
 title: "English-to-SwiftUI Engine"
-description: "Architecture specification for the three-stage pipeline that compiles natural English descriptions into declarative SwiftUI code for Apple platforms."
+description: "Architecture specification for the three-stage pipeline that compiles natural English descriptions into declarative SwiftUI code for Apple platforms, with support for data binding and API connections."
 ---
 
 # English-to-SwiftUI Engine: Architecture & Specification
 
 **Author:** Manus AI
-**Date:** March 9, 2026
+**Date:** March 10, 2026
 
 ## 1. Introduction
 
-This document outlines the architecture and technical specification for an **English-to-SwiftUI Engine**, a system designed to translate high-level, natural language descriptions of user interfaces into functional SwiftUI code. The primary goal is to accelerate the UI development process for Apple platforms (iOS, macOS, watchOS, tvOS) by allowing developers and designers to describe UI components and layouts in plain English. This approach bridges the gap between design intent and code implementation, reducing manual coding effort and enabling rapid prototyping.
+This document outlines the architecture and technical specification for an **English-to-SwiftUI Engine**, a system designed to translate high-level, natural language descriptions of user interfaces into functional, production-ready SwiftUI code. The primary goal is to accelerate the UI development process for Apple platforms (iOS, macOS, watchOS, tvOS) by allowing developers and designers to describe UI components and layouts in plain English. This approach bridges the gap between design intent and code implementation, reducing manual coding effort and enabling rapid prototyping.
 
-The engine leverages a multi-stage compilation pipeline that combines the power of Large Language Models (LLMs) for intent parsing with a structured Intermediate Representation (IR) to ensure reliable and deterministic code generation. This hybrid model aims to balance the flexibility of natural language input with the precision required for producing high-quality, production-ready SwiftUI code.
+![A preview of the English-to-SwiftUI compilation process, showing an iPhone with a generated UI and the corresponding SwiftUI code.](/images/target-swiftui.png)
 
 ### 1.1. Core Problem
 
-Manual UI development in SwiftUI, while significantly more efficient than its predecessors, still requires a detailed understanding of the framework's syntax and view modifiers. Translating a visual design or a product requirement into code is a time-consuming process that involves:
-
--   Writing boilerplate code for view structures.
--   Applying numerous modifiers for styling and layout.
--   Managing state and data flow.
--   Ensuring responsiveness across different device sizes and orientations.
+Manual UI development in SwiftUI, while significantly more efficient than its predecessors, still requires a detailed understanding of the framework's syntax and a vast library of view modifiers. Translating a visual design or a product requirement into code is a time-consuming process that involves writing boilerplate for view structures, meticulously applying modifiers for styling and layout, managing state, and ensuring responsiveness. This cognitive overhead slows down iteration and creates a barrier for non-developers to participate directly in the UI creation process.
 
 ### 1.2. Proposed Solution
 
-We propose a compilation system that accepts natural language as its source input and produces complete, compilable SwiftUI views as its target output. The system will be architected as a pipeline that processes the English description through several stages:
+We propose a compilation system that accepts natural language as its source input and produces complete, compilable SwiftUI views as its target output. The system is architected as a three-stage pipeline that progressively lowers the high-level English description into concrete code, inspired by modern compiler design [1].
 
 1.  **Intent Parsing**: An LLM interprets the natural language input to understand the user's intent, identifying UI components, properties, and relationships.
-2.  **Intermediate Representation (IR) Generation**: The parsed intent is converted into a structured, language-agnostic JSON format that represents the UI hierarchy and component attributes.
-3.  **SwiftUI Code Generation**: A code generator processes the IR and deterministically produces clean, readable, and efficient SwiftUI code.
+2.  **Intermediate Representation (IR) Generation**: The parsed intent is converted into a structured, language-agnostic JSON format that serves as the stable blueprint for the UI.
+3.  **SwiftUI Code Generation**: A deterministic code generator processes the IR and produces clean, readable, and efficient SwiftUI code.
 
-This approach is inspired by modern compiler design, where a source language is progressively lowered through different levels of abstraction to the target machine code [1]. Here, English is the highest-level source, and SwiftUI is the target.
+This hybrid model balances the flexibility of natural language with the precision required for high-quality code, ensuring the output is both reliable and maintainable.
 
 ---
 
-
 ## 2. System Architecture
 
-The English-to-SwiftUI engine is designed as a three-stage pipeline, as illustrated in the diagram below. This architecture separates the concerns of language understanding, structural representation, and code generation, making the system more modular and maintainable.
-
-![English-to-SwiftUI Engine Architecture](/home/ubuntu/ui-engine-diagram.png)
-
-*Figure 1: High-level architecture of the English-to-SwiftUI engine.* 
+The engine's three-stage pipeline ensures a clean separation of concerns, making the system modular and extensible.
 
 ### 2.1. Stage 1: Intent Parsing (LLM)
 
-This initial stage is responsible for interpreting the user's natural language input. It uses a powerful Large Language Model (LLM) to perform semantic analysis and extract the core user intent.
+This stage uses a powerful Large Language Model (LLM) to perform semantic analysis on the user's input.
 
--   **Input**: A string of plain English text describing a user interface. For example: `"Create a vertical stack with a title that says 'Welcome!' in a large font, and a button below it that says 'Get Started'."`
--   **Process**: The LLM, fine-tuned on a corpus of UI descriptions and corresponding code, parses the text to identify key entities and their relationships. This includes:
-    -   **UI Components**: `VStack`, `Text`, `Button`
-    -   **Attributes/Modifiers**: `font`, `text content`, `layout direction`
-    -   **Hierarchy**: The button is *below* the text, and both are *inside* the stack.
--   **Output**: A structured representation of the parsed intent. This is not yet the formal IR, but an internal data structure that feeds into the next stage.
+-   **Input**: A string of plain English. Example: `"Create a vertical stack with a title that says 'Welcome!' in a large font, and a button below it that says 'Get Started'."`
+-   **Process**: The LLM, fine-tuned on a corpus of UI descriptions, parses the text to identify key entities: **components** (`VStack`, `Text`, `Button`), **attributes** (`font`, `text content`), and **hierarchy** (the button is *below* the text, and both are *inside* the stack).
+-   **Output**: A structured, internal data representation of the parsed intent, ready for formalization.
 
 ### 2.2. Stage 2: Intermediate Representation (IR) Generation
 
-This stage formalizes the output from the LLM into a strict, language-agnostic Intermediate Representation. The IR serves as the definitive blueprint for the UI, decoupling the ambiguity of natural language from the deterministic process of code generation. We will use a JSON-based format for the IR.
+This stage formalizes the LLM's output into a strict, language-agnostic Intermediate Representation (IR). The IR is the definitive blueprint for the UI, decoupling the ambiguity of natural language from the deterministic process of code generation.
 
 -   **Input**: The structured intent data from the parsing stage.
--   **Process**: A dedicated module transforms the LLM's output into a standardized JSON object that conforms to a predefined schema. This schema rigorously defines the structure of UI components, their properties, and their nested relationships.
--   **Output**: A JSON object representing the UI. An example IR for the input above might look like this:
+-   **Process**: A dedicated module transforms the LLM's output into a standardized JSON object conforming to a predefined schema. This schema rigorously defines the structure of UI components, their properties, and their nested relationships.
+-   **Output**: A JSON object representing the UI. An example IR for the input above:
 
 ```json
 {
   "component": "VStack",
-  "properties": {
-    "alignment": "center",
-    "spacing": 20
-  },
+  "properties": { "alignment": "center", "spacing": 20 },
   "children": [
-    {
-      "component": "Text",
-      "properties": {
-        "text": "Welcome!",
-        "font": {
-          "style": "largeTitle"
-        }
-      }
-    },
-    {
-      "component": "Button",
-      "properties": {
-        "action": "getStartedTapped"
-      },
-      "children": [
-        {
-          "component": "Text",
-          "properties": {
-            "text": "Get Started"
-          }
-        }
-      ]
-    }
+    { "component": "Text", "properties": { "text": "Welcome!", "font": { "style": "largeTitle" } } },
+    { "component": "Button", "properties": { "action": "getStartedTapped" }, "children": [
+      { "component": "Text", "properties": { "text": "Get Started" } }
+    ]}
   ]
 }
 ```
 
 ### 2.3. Stage 3: SwiftUI Code Generation
 
-The final stage takes the structured IR and generates the target SwiftUI code. This process is deterministic and template-driven.
+The final stage takes the structured IR and generates the target SwiftUI code. This process is deterministic and template-driven, ensuring consistent and predictable output.
 
 -   **Input**: The JSON Intermediate Representation.
--   **Process**: The code generator recursively traverses the IR JSON tree. For each component in the tree, it:
-    1.  Selects the appropriate SwiftUI view (`VStack`, `Text`, `Button`).
-    2.  Applies the specified modifiers (`.font(.largeTitle)`).
-    3.  Recursively generates code for any child components.
--   **Output**: A clean, well-formatted, and compilable `.swift` file containing the SwiftUI view.
+-   **Process**: The code generator recursively traverses the IR JSON tree. For each component, it selects the appropriate SwiftUI view, applies the specified modifiers, and recursively generates code for any child components.
+-   **Output**: A clean, well-formatted, and compilable `.swift` file.
 
 ---
 
-## 3. Intermediate Representation (IR) Specification
+## 3. Connecting to Data & APIs
 
-The IR is the most critical component of this architecture, acting as the stable interface between the flexible language model and the rigid code generator. A well-designed IR ensures that the final output is predictable and correct.
+To build dynamic applications, the UI must be able to connect to a data source, whether it's local state or a remote API. The MJX architecture supports this through a data-binding extension to the IR.
 
-Our IR will be a JSON-based tree structure with the following core schema:
+Users can specify data-bound properties in their English input. The LLM is trained to recognize these requests and represent them in the IR using a special `"binding": "<variable_name>"` syntax.
 
-| Key         | Type     | Description                                                                 |
-| :---------- | :------- | :-------------------------------------------------------------------------- |
-| `component` | `String` | **Required.** The name of the SwiftUI component (e.g., `VStack`, `Image`, `TextField`). |
-| `properties`| `Object` | An object containing key-value pairs for the component's modifiers and attributes. |
-| `children`  | `Array`  | An array of child IR objects, representing the nested UI hierarchy.         |
+**Example Input**: `"Show a text field for the username, bound to the 'username' state variable."`
 
-This recursive structure allows for the representation of arbitrarily complex UI layouts.
-
----
-
-## 4. Code Generation Strategy
-
-The code generator will be implemented as a Swift tool that takes an IR JSON file as input and outputs a `.swift` file. It will use a visitor pattern to traverse the IR tree.
-
-For each `component` type in the IR, a corresponding generation function will be responsible for emitting the correct SwiftUI syntax. For example, the `generateText` function would handle an IR node where `"component": "Text"` and apply the relevant text-specific modifiers found in its `properties`.
-
-This modular approach allows for easy extension. To support a new SwiftUI component, one only needs to:
-
-1.  Update the IR schema to recognize the new component and its properties.
-2.  Implement a new generation function in the code generator for that component.
-
-The LLM does not need to be retrained for every new component, only guided to produce the correct IR structure.
-
----
-
-## 5. Example Workflow
-
-1.  **User Input**: `"Show an avatar image from 'profile.png' in a circle, with the username 'testuser' right next to it."`
-2.  **Intent Parsing (LLM)**: The LLM identifies an `HStack`, an `Image` with a circular clip shape, and a `Text` element.
-3.  **IR Generation**: The system produces the following JSON IR:
+This would produce the following IR:
 
 ```json
 {
-  "component": "HStack",
-  "properties": {"spacing": 10},
-  "children": [
-    {
-      "component": "Image",
-      "properties": {
-        "source": "profile.png",
-        "resizable": true,
-        "aspectRatio": "fill",
-        "frame": {"width": 50, "height": 50},
-        "clipShape": "Circle"
-      }
-    },
-    {
-      "component": "Text",
-      "properties": {
-        "text": "testuser",
-        "font": {"style": "headline"}
-      }
+  "component": "TextField",
+  "properties": {
+    "placeholder": "Username",
+    "text": {
+      "binding": "username"
     }
-  ]
+  }
 }
 ```
 
-4.  **SwiftUI Code Generation**: The code generator processes the IR and outputs the final Swift file:
+The code generator then interprets this binding syntax to produce the correct SwiftUI code, creating a `@State` variable and binding it to the `TextField`:
+
+```swift
+struct ContentView: View {
+    @State private var username: String = ""
+
+    var body: some View {
+        TextField("Username", text: $username)
+            .textFieldStyle(RoundedBorderTextFieldStyle())
+    }
+}
+```
+
+This same mechanism can be used to connect to view models that fetch data from an API. The generator would create properties for the view model and call its methods, allowing the English input to drive the entire data flow of the application.
+
+---
+
+## 4. Real-World Example: A User Profile Card
+
+Let's consider a more complex, real-world example to illustrate the power of the full pipeline.
+
+1.  **User Input**: `"Create a user profile card. It should have a horizontal layout. On the left, show an avatar image from 'avatar.png' in a 60x60 circle. On the right, show a vertical stack with the user's name 'Jane Doe' in a bold headline font, and their bio 'Building the future of UI' in a gray subheadline font."`
+
+2.  **Intent Parsing & IR Generation**: The system parses this request and generates a detailed JSON IR representing the nested stacks, image properties (including the circular clip shape), and text content with font styles.
+
+3.  **SwiftUI Code Generation**: The code generator processes the IR and outputs the final, production-quality Swift file:
 
 ```swift
 import SwiftUI
 
-struct UserProfileView: View {
+struct UserProfileCard: View {
     var body: some View {
-        HStack(spacing: 10) {
-            Image("profile.png")
+        HStack(alignment: .center, spacing: 16) {
+            Image("avatar.png")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(width: 50, height: 50)
+                .frame(width: 60, height: 60)
                 .clipShape(Circle())
-            
-            Text("testuser")
-                .font(.headline)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Jane Doe")
+                    .font(.headline)
+                    .fontWeight(.bold)
+
+                Text("Building the future of UI")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+            }
         }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
     }
 }
 ```
 
+This demonstrates how a single, high-level English description can be compiled into a complex, styled, and production-ready SwiftUI component.
+
 ---
 
-## 6. References
+## 5. References
 
 [1] Aho, A. V., Lam, M. S., Sethi, R., & Ullman, J. D. (2007). *Compilers: Principles, Techniques, and Tools*. Addison-Wesley.
-
