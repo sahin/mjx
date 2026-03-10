@@ -1,0 +1,155 @@
+---
+title: "English-to-Swift Backend Engine"
+description: "Architecture specification for generating complete Vapor server-side Swift applications from natural language descriptions of APIs, data models, and business logic."
+---
+
+# English-to-Swift Backend Engine: Architecture & Specification
+
+**Author:** Manus AI
+**Date:** March 9, 2026
+
+## 1. Introduction
+
+This document details the architecture for an **English-to-Swift Backend Engine**, a system designed to translate natural language descriptions of API endpoints, data models, and business logic into functional server-side Swift code. The primary target framework for code generation will be [Vapor](https://vapor.codes/), the most popular and mature server-side Swift framework [1].
+
+The engine aims to dramatically simplify backend development by allowing developers to define their application's behavior in plain English. This accelerates the creation of REST APIs, data persistence layers, and service logic, reducing the significant boilerplate and configuration typically associated with setting up a new backend service.
+
+### 1.1. Core Problem
+
+Developing backend services, even with a modern framework like Vapor, involves a multi-step process for each feature:
+
+-   Defining data models (e.g., Fluent models in Vapor).
+-   Creating database migrations to reflect model changes.
+-   Writing controller logic to handle HTTP requests.
+-   Defining routes to map URLs to controller functions.
+-   Implementing serialization and deserialization for request/response data.
+
+This process is repetitive and requires developers to be proficient in the specific conventions of the framework. An English-based approach can abstract away this complexity.
+
+### 1.2. Proposed Solution
+
+We propose a compilation system that accepts high-level English descriptions of backend functionality and generates a complete, runnable Vapor application. The architecture mirrors the English-to-SwiftUI engine, employing a multi-stage pipeline to ensure modularity and reliability:
+
+1.  **Intent Parsing**: A Large Language Model (LLM) analyzes the English input to identify backend-specific concepts like data models, API routes, HTTP methods, and business logic rules.
+2.  **Intermediate Representation (IR) Generation**: The parsed intent is transformed into a structured, backend-focused JSON format. This IR will describe the application's components: models, routes, and controllers.
+3.  **Vapor Code Generation**: A code generator processes the IR and produces the necessary Swift files for a complete Vapor project, including models, controllers, migrations, and route configurations.
+
+This architecture leverages the `swift-openapi-generator` project from Apple as a key conceptual reference, which generates server stubs from a structured OpenAPI document [2]. Our engine takes this a step further by generating the structured document itself from natural language.
+
+---
+
+
+## 2. System Architecture
+
+The backend engine follows a three-stage pipeline architecture, ensuring a clear separation of concerns between language understanding, abstract representation, and concrete code generation.
+
+![English-to-Swift Backend Engine Architecture](/home/ubuntu/backend-engine-diagram.png)
+
+*Figure 1: High-level architecture of the English-to-Swift Backend engine.*
+
+### 2.1. Stage 1: Intent Parsing (LLM)
+
+This stage uses an LLM to interpret natural language descriptions of backend services.
+
+-   **Input**: English text describing data models, API endpoints, and logic. For example: `"Create a 'Todo' model with a 'title' string and a 'completed' boolean. Then, create a GET endpoint at '/todos' that returns all todos and a POST endpoint at '/todos' that creates a new one."`
+-   **Process**: The LLM parses the input to extract key backend concepts:
+    -   **Models**: `Todo` model with `title` and `completed` fields.
+    -   **Routes**: `GET /todos`, `POST /todos`.
+    -   **Controller Actions**: List all, create new.
+-   **Output**: A structured representation of the parsed backend logic.
+
+### 2.2. Stage 2: Intermediate Representation (IR) Generation
+
+This stage converts the LLM's output into a formal, backend-specific IR. This JSON-based representation serves as a definitive, language-agnostic blueprint for the entire Vapor application.
+
+-   **Input**: The parsed backend logic from the LLM.
+-   **Process**: A transformation module maps the parsed concepts to a strict JSON schema that defines models, their properties, and the API routes with their corresponding controller actions.
+-   **Output**: A JSON object representing the application. An example IR for the input above:
+
+```json
+{
+  "appName": "TodoAPI",
+  "models": [
+    {
+      "name": "Todo",
+      "fields": [
+        {"name": "title", "type": "String", "required": true},
+        {"name": "completed", "type": "Bool", "required": true, "default": false}
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "path": "/todos",
+      "method": "GET",
+      "controllerAction": "listTodos"
+    },
+    {
+      "path": "/todos",
+      "method": "POST",
+      "controllerAction": "createTodo"
+    }
+  ]
+}
+```
+
+### 2.3. Stage 3: Vapor Code Generation
+
+The final stage generates a complete, runnable Vapor project from the IR.
+
+-   **Input**: The JSON Intermediate Representation.
+-   **Process**: The code generator traverses the IR and performs the following actions:
+    1.  **Scaffolding**: Creates the standard Vapor directory structure.
+    2.  **Model Generation**: For each model in the IR, creates a Swift file in `Sources/App/Models` that defines a Fluent model.
+    3.  **Migration Generation**: Creates a database migration file in `Sources/App/Migrations` for each model.
+    4.  **Controller Generation**: Creates a controller file in `Sources/App/Controllers` with stubbed methods for each `controllerAction` in the IR.
+    5.  **Route Configuration**: Populates `Sources/App/routes.swift` to register all the routes defined in the IR.
+-   **Output**: A directory containing a complete Vapor project, ready to be compiled and run.
+
+---
+
+## 3. Intermediate Representation (IR) Specification
+
+The backend IR is a JSON object that holistically describes the server application. It contains three top-level keys:
+
+| Key       | Type    | Description                                      |
+| :-------- | :------ | :----------------------------------------------- |
+| `appName` | `String`| The name of the Vapor application.               |
+| `models`  | `Array` | An array of objects, each defining a data model. |
+| `routes`  | `Array` | An array of objects, each defining an API route. |
+
+### 3.1. Model Schema
+
+Each object in the `models` array has the following structure:
+
+| Key      | Type    | Description                                                        |
+| :------- | :------ | :----------------------------------------------------------------- |
+| `name`   | `String`| The name of the model (e.g., `Todo`).                              |
+| `fields` | `Array` | An array of objects, each defining a field within the model.       |
+
+### 3.2. Route Schema
+
+Each object in the `routes` array has the following structure:
+
+| Key                | Type     | Description                                                        |
+| :----------------- | :------- | :----------------------------------------------------------------- |
+| `path`             | `String` | The URL path for the endpoint (e.g., `/users/:id`).                |
+| `method`           | `String` | The HTTP method (`GET`, `POST`, `PUT`, `DELETE`, etc.).            |
+| `controllerAction` | `String` | The name of the controller function that handles this route.       |
+
+---
+
+## 4. Code Generation Strategy
+
+The code generator will be a Swift command-line tool that reads the IR JSON and uses a set of templates (e.g., using a library like Stencil) to generate the various files of a Vapor project. This template-based approach ensures that the generated code is consistent, idiomatic, and easy to understand.
+
+By separating the IR from the generation templates, the system can be adapted to target different server-side Swift frameworks (e.g., Hummingbird) by simply swapping out the template set, without needing to change the LLM or IR generation stages.
+
+---
+
+## 5. References
+
+[1] The Vapor Team. (2026). *Vapor - Server-side Swift.* Vapor. https://vapor.codes/
+
+[2] Apple Inc. (2024). *swift-openapi-generator.* GitHub. https://github.com/apple/swift-openapi-generator
+
