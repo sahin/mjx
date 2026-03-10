@@ -16,6 +16,11 @@ const DOC_EXAMPLES = {
       {
         label: 'Welcome Screen',
         english: 'Create a vertical stack with a large "Welcome!" title at the top and a blue "Get Started" button below it.',
+        columns: [
+          { name: 'title', type: 'Text', value: '"Welcome!"', modifier: '.font(.largeTitle)' },
+          { name: 'button', type: 'Button', value: '"Get Started"', modifier: '.background(.blue)' },
+          { name: 'layout', type: 'VStack', value: 'center', modifier: 'spacing: 20' },
+        ],
         code: `import SwiftUI
 
 struct WelcomeView: View {
@@ -41,6 +46,12 @@ struct WelcomeView: View {
       {
         label: 'Profile Card',
         english: 'Create a user profile card with a circular avatar image on the left (60x60), and on the right a bold name "Jane Doe" and a gray subtitle "Building the future of UI".',
+        columns: [
+          { name: 'avatar', type: 'Image', value: '60×60', modifier: '.clipShape(Circle())' },
+          { name: 'name', type: 'Text', value: '"Jane Doe"', modifier: '.fontWeight(.bold)' },
+          { name: 'subtitle', type: 'Text', value: '"Building the future of UI"', modifier: '.foregroundColor(.gray)' },
+          { name: 'layout', type: 'HStack', value: 'leading', modifier: 'spacing: 16' },
+        ],
         code: `import SwiftUI
 
 struct UserProfileCard: View {
@@ -71,6 +82,12 @@ struct UserProfileCard: View {
       {
         label: 'Login Form',
         english: 'Create a login form with a title "Sign In", a text field for email, a secure field for password, and a full-width blue "Login" button.',
+        columns: [
+          { name: 'title', type: 'Text', value: '"Sign In"', modifier: '.font(.largeTitle)' },
+          { name: 'email', type: 'TextField', value: '@State String', modifier: '.keyboardType(.emailAddress)' },
+          { name: 'password', type: 'SecureField', value: '@State String', modifier: 'secure input' },
+          { name: 'loginBtn', type: 'Button', value: '"Login"', modifier: '.frame(maxWidth: .infinity)' },
+        ],
         code: `import SwiftUI
 
 struct LoginView: View {
@@ -108,6 +125,11 @@ struct LoginView: View {
       {
         label: 'Settings Form',
         english: 'Create a settings form with a "Notifications" section containing a toggle for "Push Notifications" and a toggle for "Email Alerts".',
+        columns: [
+          { name: 'section', type: 'Section', value: '"Notifications"', modifier: 'Form container' },
+          { name: 'pushNotifications', type: 'Toggle', value: '@State Bool = true', modifier: 'isOn: $pushNotifications' },
+          { name: 'emailAlerts', type: 'Toggle', value: '@State Bool = false', modifier: 'isOn: $emailAlerts' },
+        ],
         code: `import SwiftUI
 
 struct SettingsView: View {
@@ -171,6 +193,11 @@ struct SettingsView: View {
       {
         label: 'Welcome Bot',
         english: 'Start with "Hello! How can I help?". If the user says "billing", ask "What is your billing question?". If they say "support", ask "What is your support issue?".',
+        columns: [
+          { name: 'state', type: 'enum ChatState', value: 'Welcome | Billing | Support', modifier: 'FSM root' },
+          { name: 'greet()', type: 'fn → String', value: '"Hello! How can I help?"', modifier: 'initial message' },
+          { name: 'process(input)', type: 'fn → String', value: 'match self.state', modifier: 'transition handler' },
+        ],
         code: `use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -219,6 +246,12 @@ impl Chatbot {
       {
         label: 'Lead Capture Bot',
         english: "Ask for the user's name, then their email, then their company. Finally confirm with \"Thanks {name}! We'll be in touch at {email}.\"",
+        columns: [
+          { name: 'ctx.name', type: 'String', value: 'captured from input', modifier: 'AskName → AskEmail' },
+          { name: 'ctx.email', type: 'String', value: 'captured from input', modifier: 'AskEmail → AskCompany' },
+          { name: 'ctx.company', type: 'String', value: 'captured from input', modifier: 'AskCompany → Confirm' },
+          { name: 'confirm msg', type: 'String', value: 'interpolated template', modifier: 'final state' },
+        ],
         code: `use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -279,6 +312,11 @@ impl LeadBot {
       {
         label: 'Order Status Bot',
         english: 'Ask for the order ID. Then call GET /api/orders/{id} and respond with "Your order status is {status}". If the API fails, say "Could not retrieve order."',
+        columns: [
+          { name: 'order_id', type: 'String', value: 'captured from input', modifier: 'AskOrderId state' },
+          { name: 'GET /api/orders/{id}', type: 'async HTTP', value: 'gloo_net::Request', modifier: 'FetchingStatus state' },
+          { name: 'body["status"]', type: 'serde_json::Value', value: 'JSON response field', modifier: 'unwrap_or("unknown")' },
+        ],
         code: `use wasm_bindgen::prelude::*;
 use gloo_net::http::Request;
 
@@ -354,6 +392,14 @@ impl OrderBot {
       {
         label: 'User CRUD API',
         english: 'Create a User API with name and email fields. Generate full CRUD endpoints at /users.',
+        columns: [
+          { name: 'ID', type: 'int', value: 'auto-increment', modifier: 'json:"id"' },
+          { name: 'Name', type: 'string', value: 'required', modifier: 'json:"name"' },
+          { name: 'Email', type: 'string', value: 'required', modifier: 'json:"email"' },
+          { name: 'GET /users', type: 'route', value: 'list all', modifier: 'no auth' },
+          { name: 'POST /users', type: 'route', value: 'create', modifier: 'no auth' },
+          { name: 'GET /users/{id}', type: 'route', value: 'get by id', modifier: 'no auth' },
+        ],
         code: `// models/user.go
 package models
 
@@ -421,6 +467,13 @@ func main() {
       {
         label: 'Product API + PostgreSQL',
         english: 'Create a Product API with name (string) and price (float). Connect to PostgreSQL using GORM. Generate CRUD endpoints at /products.',
+        columns: [
+          { name: 'ID', type: 'uint', value: 'gorm.Model', modifier: 'primary key' },
+          { name: 'Name', type: 'string', value: 'not null', modifier: 'gorm:"not null"' },
+          { name: 'Price', type: 'float64', value: 'not null', modifier: 'gorm:"not null"' },
+          { name: 'DATABASE_URL', type: 'env var', value: 'PostgreSQL DSN', modifier: 'os.Getenv' },
+          { name: 'AutoMigrate', type: 'GORM', value: 'Product{}', modifier: 'on Connect()' },
+        ],
         code: `// models/product.go
 package models
 
@@ -476,6 +529,13 @@ func CreateProduct(w http.ResponseWriter, r *http.Request) {
       {
         label: 'Auth-Protected API',
         english: 'Create a Note API with title and content. GET /notes is public. POST /notes requires a Bearer token in the Authorization header.',
+        columns: [
+          { name: 'Title', type: 'string', value: 'required', modifier: 'json:"title"' },
+          { name: 'Content', type: 'string', value: 'required', modifier: 'json:"content"' },
+          { name: 'GET /notes', type: 'route', value: 'public', modifier: 'no middleware' },
+          { name: 'POST /notes', type: 'route', value: 'protected', modifier: 'BearerAuth()' },
+          { name: 'API_SECRET', type: 'env var', value: 'token value', modifier: 'os.Getenv' },
+        ],
         code: `// middleware/auth.go
 package middleware
 
@@ -563,6 +623,12 @@ func main() {
       {
         label: 'Counter App',
         english: 'Create a counter app with a heading showing the count, an increment button, and a decrement button.',
+        columns: [
+          { name: 'count', type: 'UseStateHandle<i32>', value: '0', modifier: 'use_state(|| 0i32)' },
+          { name: 'on_increment', type: 'Callback', value: 'count + 1', modifier: 'Callback::from' },
+          { name: 'on_decrement', type: 'Callback', value: 'count - 1', modifier: 'Callback::from' },
+          { name: 'h1', type: 'Html', value: '{ *count }', modifier: 'reactive display' },
+        ],
         code: `use yew::prelude::*;
 
 #[function_component(Counter)]
@@ -597,6 +663,12 @@ fn main() {
       {
         label: 'To-Do List',
         english: 'Create a to-do list app with an input field and Add button. Show the list of items below. Each item should have a Delete button.',
+        columns: [
+          { name: 'todos', type: 'UseStateHandle<Vec<String>>', value: 'Vec::new()', modifier: 'use_state' },
+          { name: 'input', type: 'UseStateHandle<String>', value: 'String::new()', modifier: 'use_state' },
+          { name: 'on_add', type: 'Callback', value: 'push to todos', modifier: 'clears input' },
+          { name: 'on_delete(i)', type: 'Callback', value: 'remove at index', modifier: 'todos.remove(i)' },
+        ],
         code: `use yew::prelude::*;
 
 #[function_component(TodoApp)]
@@ -655,6 +727,12 @@ fn todo_app() -> Html {
       {
         label: 'Two-Page Router',
         english: 'Create a two-page app. Home page at / shows "Welcome Home". About page at /about shows "About Us". Add a nav bar with links to both pages.',
+        columns: [
+          { name: 'Route::Home', type: 'enum Route', value: '#[at("/")]', modifier: 'yew-router' },
+          { name: 'Route::About', type: 'enum Route', value: '#[at("/about")]', modifier: 'yew-router' },
+          { name: 'Nav', type: 'FunctionComponent', value: 'Link<Route>', modifier: 'client-side nav' },
+          { name: 'switch()', type: 'fn → Html', value: 'match routes', modifier: 'BrowserRouter' },
+        ],
         code: `use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -733,6 +811,13 @@ fn main() {
       {
         label: 'Todo API',
         english: 'Create a Todo API with title and completed fields. Generate GET and POST endpoints at /todos.',
+        columns: [
+          { name: 'id', type: 'UUID', value: '@ID(key: .id)', modifier: 'Fluent primary key' },
+          { name: 'title', type: 'String', value: 'required', modifier: '@Field(key: "title")' },
+          { name: 'completed', type: 'Bool', value: 'default: false', modifier: '@Field(key: "completed")' },
+          { name: 'GET /todos', type: 'route', value: 'list all', modifier: 'async throws' },
+          { name: 'POST /todos', type: 'route', value: 'create', modifier: 'async throws' },
+        ],
         code: `// Sources/App/Models/Todo.swift
 import Vapor
 import Fluent
@@ -779,6 +864,13 @@ struct TodoController: RouteCollection {
       {
         label: 'Blog API + Auth',
         english: 'Create a Blog Post API with title and content. GET /posts is public. POST /posts requires authentication.',
+        columns: [
+          { name: 'id', type: 'UUID', value: '@ID(key: .id)', modifier: 'Fluent primary key' },
+          { name: 'title', type: 'String', value: 'required', modifier: '@Field(key: "title")' },
+          { name: 'content', type: 'String', value: 'required', modifier: '@Field(key: "content")' },
+          { name: 'GET /posts', type: 'route', value: 'public', modifier: 'no middleware' },
+          { name: 'POST /posts', type: 'route', value: 'protected', modifier: 'UserToken.authenticator()' },
+        ],
         code: `// Sources/App/Models/Post.swift
 import Vapor
 import Fluent
@@ -826,6 +918,13 @@ struct PostController: RouteCollection {
       {
         label: 'Product API + Migration',
         english: 'Create a Product model with name and price. Store in PostgreSQL. Generate full CRUD and the database migration file.',
+        columns: [
+          { name: 'id', type: 'UUID', value: '@ID(key: .id)', modifier: 'Fluent primary key' },
+          { name: 'name', type: 'String', value: 'required', modifier: '@Field(key: "name")' },
+          { name: 'price', type: 'Double', value: 'required', modifier: '@Field(key: "price")' },
+          { name: 'CreateProduct', type: 'AsyncMigration', value: 'prepare + revert', modifier: 'schema: "products"' },
+          { name: 'DATABASE_URL', type: 'env var', value: 'PostgreSQL URL', modifier: 'FluentPostgresDriver' },
+        ],
         code: `// Sources/App/Migrations/CreateProduct.swift
 import Fluent
 
@@ -932,6 +1031,11 @@ const S = {
   td: { padding: '0.4rem 0.65rem', borderBottom: '1px solid rgba(255,255,255,0.035)', color: '#aaa', verticalAlign: 'top' },
   mono: (color) => ({ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.78rem', color: color || '#e0c080' }),
   copyBtn: { fontSize: '10px', padding: '2px 7px', borderRadius: '3px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#555', cursor: 'pointer', fontFamily: "'Inter', sans-serif" },
+  colBox: { padding: '0 1.5rem 0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 },
+  colLabel: { fontSize: '9px', fontWeight: 700, color: '#3a3a3a', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: "'JetBrains Mono', monospace", marginBottom: '0.5rem', paddingTop: '0.75rem' },
+  colTable: { width: '100%', borderCollapse: 'collapse', fontSize: '11px' },
+  colTh: { textAlign: 'left', padding: '0.25rem 0.5rem', background: 'rgba(255,255,255,0.025)', color: '#3a3a3a', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+  colTd: { padding: '0.25rem 0.5rem', borderBottom: '1px solid rgba(255,255,255,0.03)', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', verticalAlign: 'middle' },
 };
 
 // ── Section renderer ──────────────────────────────────────────────────────────
@@ -1038,6 +1142,33 @@ export default function DocPage({ params }) {
                 <div style={S.englishLabel}>English Input</div>
                 <div style={S.englishText}>"{ex.english}"</div>
               </div>
+
+              {/* Data columns */}
+              {ex.columns && ex.columns.length > 0 && (
+                <div style={S.colBox}>
+                  <div style={S.colLabel}>Data Columns</div>
+                  <table style={S.colTable}>
+                    <thead>
+                      <tr>
+                        <th style={S.colTh}>Field</th>
+                        <th style={S.colTh}>Type</th>
+                        <th style={{ ...S.colTh, color: color + '99' }}>Value / Default</th>
+                        <th style={S.colTh}>Modifier</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ex.columns.map((col, i) => (
+                        <tr key={i}>
+                          <td style={{ ...S.colTd, color }}>{col.name}</td>
+                          <td style={{ ...S.colTd, color: '#e0c080' }}>{col.type}</td>
+                          <td style={{ ...S.colTd, color: '#aaa' }}>{col.value}</td>
+                          <td style={{ ...S.colTd, color: '#555' }}>{col.modifier}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               {/* Code header */}
               <div style={S.codeHeader}>
