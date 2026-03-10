@@ -82,6 +82,8 @@ export default function Home() {
         <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: '1.1rem', color: 'var(--accent)', letterSpacing: '0.1em' }}>MJX</span>
         <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
           <Link href="/docs" style={{ color: 'var(--muted)', fontSize: '0.85rem', fontFamily: 'JetBrains Mono, monospace', textDecoration: 'none' }}>/docs</Link>
+          <Link href="/playground" style={{ color: 'var(--muted)', fontSize: '0.85rem', fontFamily: 'JetBrains Mono, monospace', textDecoration: 'none' }}>/playground</Link>
+          <Link href="/app" style={{ color: 'var(--accent)', fontSize: '0.85rem', fontFamily: 'JetBrains Mono, monospace', textDecoration: 'none', fontWeight: 700 }}>App (WASM) ↗</Link>
           <a href="https://github.com/sahin/mjx" target="_blank" rel="noopener noreferrer" style={{
             color: '#000', background: 'var(--accent)', padding: '0.3rem 0.9rem', borderRadius: '3px',
             fontSize: '0.78rem', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, textDecoration: 'none', letterSpacing: '0.05em',

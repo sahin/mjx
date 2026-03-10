@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MJX — English to Code</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/wasm/styles-1ccfa133cba5488b.css" integrity="sha384&#x2D;aJfKUL3yMYp8t6wcPbV32&#x2B;fifyqOeITpSiCPwgVkrRmOW7OBliQICsdwBpZcu6Xf"/>
+
+<link rel="modulepreload" href="/wasm/mjx-258654cd16c6201b.js" crossorigin=anonymous integrity="sha384-wApDugr1WssaLl31QNuYrcwUB7OmgXpKmEAFuy7CIOjYiAHGvs20eD1C3Uj3keO8">
+<link rel="preload" href="/wasm/mjx-258654cd16c6201b_bg.wasm" crossorigin=anonymous integrity="sha384-h6hQBoKLg/lwKzFnj+ZRSaIMAIvmMewK7PTXobf7APTAr1V2f28Vrq1N/jcKcC1J" as="fetch" type="application/wasm"></head>
+<body>
+
+<script type="module" nonce="z7p9zWgOBAlh/D4WUS6pFQ==">
+import init, * as bindings from '/wasm/mjx-258654cd16c6201b.js';
+const wasm = await init('/wasm/mjx-258654cd16c6201b_bg.wasm');
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script></body>
+</html>
