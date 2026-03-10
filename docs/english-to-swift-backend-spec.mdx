@@ -1,143 +1,128 @@
 ---
-title: "English-to-Swift Backend Engine"
-description: "Architecture for generating complete Vapor server-side Swift applications from natural language, with support for database persistence and authentication."
+title: "English-to-Backend Engine (Swift)"
+description: "Architecture for compiling natural language API descriptions into high-performance, type-safe backend services using Swift and the Vapor framework, including database integration with Fluent."
 ---
 
-# English-to-Swift Backend Engine: Architecture & Specification
+# English-to-Backend Engine (Swift): Architecture & Specification
 
 **Author:** Manus AI
 **Date:** March 10, 2026
 
 ## 1. Introduction
 
-This document details the architecture for an **English-to-Swift Backend Engine**, a system designed to translate natural language descriptions of API endpoints, data models, and business logic into functional server-side Swift code. The primary target framework for code generation is [Vapor](https://vapor.codes/), the most popular and mature server-side Swift framework [1].
+This document specifies the architecture for an **English-to-Backend Engine**, a compiler that translates natural language descriptions of API resources and business logic into a complete, high-performance backend service written in Swift using the Vapor framework. The engine automates the creation of type-safe, asynchronous, and scalable server-side applications, from data models to routing.
 
-![A preview of the English-to-Swift Backend compilation process, showing an IDE with an English prompt and the corresponding generated Vapor code.](/images/target-swift-backend.png)
+![A preview of the English-to-Backend compilation process, showing an IDE with Swift/Vapor code and API testing output.](/images/target-swift-backend.png)
 
 ### 1.1. Core Problem
 
-Developing backend services, even with a modern framework like Vapor, involves a multi-step, repetitive process for each feature: defining data models, creating database migrations, writing controller logic, and defining routes. This process requires proficiency in the specific conventions of the framework and can slow down development.
+While Swift is increasingly popular for backend development due to its performance and safety, building a Vapor application involves a non-trivial amount of setup. Developers must define data models, create database migrations, write route handlers (controllers), and configure the application. This process, while well-structured, is largely boilerplate that can be automated.
 
 ### 1.2. Proposed Solution
 
-We propose a compilation system that accepts high-level English descriptions of backend functionality and generates a complete, runnable Vapor application. The architecture employs a multi-stage pipeline to ensure modularity and reliability:
+We propose a compiler that uses English as the source language for defining a Vapor backend. This approach allows developers to quickly scaffold a complete application by describing its resources and endpoints at a high level.
 
-1.  **Intent Parsing**: An LLM analyzes the English input to identify backend-specific concepts like data models, API routes, and business logic.
-2.  **Intermediate Representation (IR) Generation**: The parsed intent is transformed into a structured, backend-focused JSON format.
-3.  **Vapor Code Generation**: A code generator processes the IR and produces the necessary Swift files for a complete Vapor project.
-
-This approach is conceptually similar to Apple's `swift-openapi-generator`, which generates server stubs from a structured OpenAPI document [2]. Our engine takes this a step further by generating the structured document itself from natural language.
+-   **Type Safety**: Leverages Swift's strong type system to catch errors at compile time.
+-   **Asynchronous by Default**: Built on Swift's modern `async/await` concurrency model for high performance.
+-   **Database Integration**: Generates Fluent ORM models and migrations for easy database interaction.
 
 ---
 
-## 2. System Architecture
+## 2. API Definition Architecture
 
-The backend engine follows a three-stage pipeline architecture, ensuring a clear separation of concerns.
+The system is designed to understand descriptions of API resources and their associated endpoints.
 
-### 2.1. Stage 1: Intent Parsing (LLM)
+### 2.1. Defining Resources and Endpoints
 
-This stage uses an LLM to interpret natural language descriptions of backend services.
+Users describe their API in terms of resources, fields, and the HTTP methods they should respond to.
 
--   **Input**: English text. Example: `"Create a 'Todo' model with a 'title' string and a 'completed' boolean. Then, create a GET endpoint at '/todos' that returns all todos and a POST endpoint at '/todos' that creates a new one."`
--   **Process**: The LLM parses the input to extract **Models**, **Routes**, and **Controller Actions**.
--   **Output**: A structured representation of the parsed backend logic.
+**Example Input**: `"Create a Product API. The Product model should have a name (string) and a price (double). Generate full CRUD endpoints for /products."`
 
-### 2.2. Stage 2: Intermediate Representation (IR) Generation
+### 2.2. API Intermediate Representation (IR)
 
-This stage converts the LLM's output into a formal, backend-specific IR.
-
--   **Input**: The parsed backend logic from the LLM.
--   **Process**: A transformation module maps the parsed concepts to a strict JSON schema.
--   **Output**: A JSON object representing the application. Example IR:
+The LLM parses this description into a structured IR that defines the API's contract.
 
 ```json
 {
-  "appName": "TodoAPI",
   "models": [
-    { "name": "Todo", "fields": [
-      {"name": "title", "type": "String"},
-      {"name": "completed", "type": "Bool", "default": false}
-    ]}
+    {
+      "name": "Product",
+      "fields": [
+        { "name": "name", "type": "String" },
+        { "name": "price", "type": "Double" }
+      ]
+    }
   ],
   "routes": [
-    { "path": "/todos", "method": "GET", "action": "listTodos" },
-    { "path": "/todos", "method": "POST", "action": "createTodo" }
+    { "path": "/products", "method": "GET", "handler": "getProducts" },
+    { "path": "/products", "method": "POST", "handler": "createProduct" },
+    // ... other CRUD routes ...
   ]
 }
 ```
 
-### 2.3. Stage 3: Vapor Code Generation
+### 2.3. Vapor Code Generation
 
-The final stage generates a complete, runnable Vapor project from the IR.
+The code generator produces a complete Vapor project from the IR.
 
--   **Input**: The JSON Intermediate Representation.
--   **Process**: The code generator traverses the IR and scaffolds the Vapor directory structure, generating models, migrations, controllers, and route configurations.
--   **Output**: A directory containing a complete Vapor project, ready to be compiled and run.
-
----
-
-## 3. Database & Authentication
-
-To be useful, a backend needs to persist data and secure its endpoints.
-
-### 3.1. Database Persistence with Fluent
-
-By default, all generated models are also Fluent models. The generator automatically creates the necessary database migrations.
-
-**Example Input**: `"Create a Product model with a name and price. It should be stored in a database."`
-
-The code generator will produce a `Product.swift` file with a class that conforms to `Model`, and a `CreateProduct.swift` migration file. The controller actions will then use Fluent's ORM methods (`Product.query(on: db).all()`, `product.save(on: db)`) to interact with the database.
-
-### 3.2. Authentication
-
-Users can specify authentication requirements for their endpoints.
-
-**Example Input**: `"Protect the POST /products endpoint so that only authenticated users can access it."`
-
-The LLM will add an `"auth": true` flag to the route's IR. The code generator will then apply Vapor's authentication middleware to that route, ensuring that only requests with a valid token can access it.
-
----
-
-## 4. Real-World Example: A Blog API
-
-Let's walk through a complete example for a simple blog API.
-
-1.  **User Input**: `"Create a blog API. It needs a Post model with a title and content. It should have full CRUD endpoints for posts, and the create, update, and delete endpoints must be protected."`
-
-2.  **Intent Parsing & IR Generation**: The system parses this request, identifies the `Post` model, the five CRUD routes, and the authentication requirement for three of them.
-
-3.  **Vapor Code Generation**: The generator produces a complete Vapor project. The `PostController.swift` file will contain the five handler functions (`list`, `create`, `get`, `update`, `delete`). The `routes.swift` file will group the `create`, `update`, and `delete` routes under Vapor's `tokenAuthMiddleware()`.
-
-The generated code for a controller action would look like this:
+-   **Models**: For each model, a Swift `class` conforming to `Vapor.Model` and `Content` is created.
+-   **Migrations**: A `Migration` struct is generated to create the database table for the model.
+-   **Controllers**: A `Controller` struct is generated with methods for each route handler.
+-   **Routing**: The `routes.swift` file is populated to map the paths and methods to the controller actions.
 
 ```swift
+// Models/Product.swift
+import Vapor
+import Fluent
+
+final class Product: Model, Content {
+    static let schema = "products"
+
+    @ID(key: .id)
+    var id: UUID?
+
+    @Field(key: "name")
+    var name: String
+
+    @Field(key: "price")
+    var price: Double
+    
+    // ... init ...
+}
+
+// Controllers/ProductController.swift
 import Vapor
 
-struct PostController: RouteCollection {
+struct ProductController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        let posts = routes.grouped("posts")
-        posts.get(use: list)
-
-        let protected = posts.grouped(UserToken.authenticator())
-        protected.post(use: create)
-        // ... other protected routes
+        let products = routes.grouped("products")
+        products.get(use: getProducts)
+        products.post(use: createProduct)
     }
 
-    func create(req: Request) throws -> EventLoopFuture<Post> {
-        let post = try req.content.decode(Post.self)
-        return post.save(on: req.db).map { post }
+    func getProducts(req: Request) async throws -> [Product] {
+        try await Product.query(on: req.db).all()
     }
 
-    // ... other handler functions
+    // ... other handlers ...
 }
 ```
 
-This demonstrates how a single English prompt can generate a secure, database-backed REST API with full CRUD functionality, significantly reducing the time and effort required for backend development.
+---
+
+## 3. Database Integration with Fluent
+
+Vapor's power is fully realized with its built-in ORM, Fluent. The MJX engine generates all necessary Fluent code from the English description.
+
+When a model is defined, the code generator automatically creates:
+
+1.  A **Fluent Model** class with `@ID`, `@Field`, and `@OptionalField` property wrappers.
+2.  A **Migration** struct that implements the `prepare(on:)` and `revert(on:)` methods to create and drop the database table.
+
+This deep integration with the framework allows the engine to generate a backend that is not just a collection of files, but a fully integrated, idiomatic Vapor application.
 
 ---
 
-## 5. References
+## 4. References
 
-[1] The Vapor Team. (2026). *Vapor - Server-side Swift.* Vapor. https://vapor.codes/
-
-[2] Apple Inc. (2024). *swift-openapi-generator.* GitHub. https://github.com/apple/swift-openapi-generator
+[1] The Vapor Team. (2023). *Vapor - Server-side Swift*. Retrieved from https://vapor.codes

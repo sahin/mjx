@@ -1,6 +1,6 @@
 ---
 title: "English-to-Web Engine (Rust/WASM)"
-description: "Architecture for compiling natural language into a complete, high-performance web application using Rust and WebAssembly, with routing and API integration."
+description: "Architecture for compiling natural language descriptions of web applications into high-performance, component-based single-page applications (SPAs) using Rust and WebAssembly with the Yew framework."
 ---
 
 # English-to-Web Engine (Rust/WASM): Architecture & Specification
@@ -10,151 +10,98 @@ description: "Architecture for compiling natural language into a complete, high-
 
 ## 1. Introduction
 
-This document specifies the architecture for an **English-to-Web Engine**, a system that compiles high-level, natural language descriptions of user interfaces and application logic into a complete web application. The engine generates Rust code that is then compiled to WebAssembly (WASM), leveraging a framework like [Yew](https://yew.rs/) or [Dioxus](https://dioxuslabs.com/) to build a high-performance, single-page application (SPA).
+This document specifies the architecture for an **English-to-Web Engine**, a compiler that translates natural language descriptions of a web application's UI and behavior into a complete single-page application (SPA) built with Rust and WebAssembly (WASM). The engine uses the Yew framework to create a component-based architecture, similar to React, but with the performance and safety guarantees of Rust.
 
-![A preview of the English-to-Web compilation process, showing a browser with a generated web app and the corresponding Rust code.](/images/target-web-rust.png)
+![A preview of the English-to-Web compilation process, showing a browser with a generated web app and the corresponding Rust/Yew code.](/images/target-web-rust.png)
 
 ### 1.1. Core Problem
 
-Modern web development is powerful but fragmented. Building a web application requires knowledge of HTML, CSS, JavaScript/TypeScript, and a chosen frontend framework. This complexity leads to significant boilerplate, complex state management, and a class of runtime errors that are difficult to prevent in dynamically-typed languages.
+Modern web development, while powerful, is complex. Building a reactive, component-based SPA requires a deep understanding of frameworks like React, Vue, or Svelte, along with their associated build tools and state management libraries. This can be a significant barrier for developers new to the ecosystem and can be time-consuming even for experienced engineers.
 
 ### 1.2. Proposed Solution
 
-We propose a compilation pipeline that translates English descriptions into a complete, high-performance web application built with Rust and WebAssembly. This offers several key benefits:
+We propose a compiler that allows developers to describe a web application's components, state, and interactions in plain English. The system then generates a complete, high-performance Rust/WASM project using the Yew framework.
 
--   **Performance**: Rust and WASM deliver near-native speed in the browser, eliminating JavaScript performance bottlenecks.
--   **Reliability**: Rust's strict compile-time checks and ownership model prevent a wide class of common bugs, such as null pointer exceptions and race conditions.
--   **Simplified Toolchain**: The entire application is written in a single language (Rust), simplifying the development and build process.
-
-The architecture follows the established three-stage pipeline: Intent Parsing (LLM), Intermediate Representation (IR), and Code Generation.
+-   **Performance**: By compiling to WASM, the application's logic runs at near-native speed in the browser.
+-   **Safety**: Rust's ownership model and type system prevent common web development bugs like null reference errors.
+-   **Component-Based**: The generated code follows a modern, component-based architecture, making it modular and maintainable.
 
 ---
 
-## 2. System Architecture
+## 2. Component-Based Architecture
 
-The engine is designed as a modular, three-stage pipeline.
+The engine is designed to understand descriptions of UI components and how they fit together.
 
-### 2.1. Stage 1: Intent Parsing (LLM)
+### 2.1. Defining Components and Props
 
-This stage interprets the English input to understand the desired web application structure and behavior.
+Users describe the UI in terms of components and their properties (props).
 
--   **Input**: A string of English text. Example: `"Create a simple counter app. It should have a heading that shows the current count, initialized to 0. Below it, have two buttons: one to increment the count and one to decrement it."`
--   **Process**: The LLM parses the text to identify **UI Components**, **State**, and **Logic**.
--   **Output**: A structured representation of the application’s components and logic.
+**Example Input**: `"Create a Counter component. It should have a button to increment a count. Display the current count in a heading."`
 
-### 2.2. Stage 2: Intermediate Representation (IR) Generation
+### 2.2. Component IR
 
-This stage formalizes the parsed intent into a strict JSON format that describes the web application’s component tree and state management.
-
--   **Input**: The structured application design from the LLM.
--   **Process**: A transformation module converts the design into a standardized JSON object.
--   **Output**: A JSON object representing the application. Example IR:
+The LLM parses this into a component-based IR.
 
 ```json
 {
-  "appName": "CounterApp",
-  "state": [
-    { "name": "count", "type": "i32", "initialValue": 0 }
-  ],
-  "rootComponent": {
-    "component": "div",
-    "children": [
-      { "component": "h1", "properties": { "text": "{{count}}" } },
-      { "component": "button", "properties": { "text": "+", "onClick": "increment" } },
-      { "component": "button", "properties": { "text": "-", "onClick": "decrement" } }
-    ]
-  },
-  "actions": [
-    { "name": "increment", "logic": "state.count += 1;" },
-    { "name": "decrement", "logic": "state.count -= 1;" }
+  "components": [
+    {
+      "name": "Counter",
+      "state": [
+        { "name": "count", "type": "i32", "initialValue": 0 }
+      ],
+      "view": {
+        "component": "div",
+        "children": [
+          { "component": "h1", "properties": { "text": { "binding": "count" } } },
+          { "component": "button", "properties": { "text": "Increment", "onClick": "incrementCount" } }
+        ]
+      },
+      "actions": [
+        { "name": "incrementCount", "updates": { "count": "count + 1" } }
+      ]
+    }
   ]
 }
 ```
 
-### 2.3. Stage 3: Rust/WASM Code Generation
+### 2.3. Yew Code Generation
 
-The final stage generates a complete Rust project using a framework like Yew, ready to be compiled into a WebAssembly-based SPA.
-
--   **Input**: The JSON Intermediate Representation.
--   **Process**: The code generator traverses the IR and produces `main.rs`, `lib.rs`, component files, and `index.html`.
--   **Output**: A directory containing a complete Rust web application project.
-
----
-
-## 3. Advanced Features: Routing and API Calls
-
-To build full-featured applications, the engine supports client-side routing and interaction with external APIs.
-
-### 3.1. Client-Side Routing
-
-Users can define multiple pages and the routes that lead to them.
-
-**Example Input**: `"Create a two-page app. The home page at / should say 'Welcome'. The about page at /about should say 'About Us'."`
-
-The IR is extended to include a `routes` array, and the code generator produces the necessary routing logic using the Yew Router.
-
-### 3.2. Calling External APIs
-
-Similar to the Chatbot engine, the Web engine can define actions that make asynchronous API calls.
-
-**Example Input**: `"Create a button that, when clicked, fetches a user's name from GET /api/user and displays it in a heading."`
-
-The IR `actions` can include an `apiCall` property. The Rust code generator will produce an `async` function that uses `reqwest` to fetch the data and update the component's state upon completion, triggering a re-render.
-
----
-
-## 4. Real-World Example: A To-Do List App
-
-Let's walk through a complete to-do list application.
-
-1.  **User Input**: `"Create a to-do list app. It needs an input field and an 'Add' button. Below that, display a list of the to-do items. Each item in the list should have a 'Delete' button next to it."`
-
-2.  **Intent Parsing & IR Generation**: The system parses this request and generates a detailed IR. This IR defines:
-    -   A `todos` state variable (a `Vec<String>`).
-    -   An `new_todo` state variable for the input field.
-    -   UI components for the input, buttons, and the list.
-    -   Actions for `add_todo` and `delete_todo`.
-
-3.  **Rust/WASM Code Generation**: The generator produces a complete Yew application. The core logic in the `App` component would manage the state and render the UI. The `add_todo` action would push the `new_todo` string into the `todos` vector, and `delete_todo` would remove an item by its index. The render function would iterate over the `todos` vector to display the list.
-
-The generated Rust code would look conceptually like this:
+The code generator produces a Yew component from the IR.
 
 ```rust
 use yew::prelude::*;
 
-struct App {
-    todos: Vec<String>,
-    new_todo: String,
-}
+#[function_component(Counter)]
+fn counter() -> Html {
+    let count = use_state(|| 0);
 
-// ... enum for messages (add, delete, update_input) ...
+    let on_increment = {
+        let count = count.clone();
+        Callback::from(move |_| count.set(*count + 1))
+    };
 
-impl Component for App {
-    // ... boilerplate ...
-
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        match msg {
-            // handle add, delete, etc.
-        }
-    }
-
-    fn view(&self) -> Html {
-        html! {
-            <div>
-                <input value=&self.new_todo oninput=... />
-                <button onclick=...>{ "Add" }</button>
-                <ul>
-                    { for self.todos.iter().enumerate().map(|(index, todo)| html! {
-                        <li>
-                            { todo }
-                            <button onclick=...>{ "Delete" }</button>
-                        </li>
-                    }) }
-                </ul>
-            </div>
-        }
+    html! {
+        <div>
+            <h1>{ *count }</h1>
+            <button onclick={on_increment}>{ "Increment" }</button>
+        </div>
     }
 }
 ```
 
-This demonstrates how a functional, interactive single-page application can be generated from a single, high-level English description, leveraging the performance and reliability of Rust and WebAssembly.
+---
+
+## 3. Routing and Navigation
+
+For multi-page applications, the engine can generate a router to handle navigation between different views.
+
+**Example**: `"Create a two-page app. The home page should show a welcome message. The about page should show company info. Add a nav bar with links to both."`
+
+The code generator will produce a Yew application with a router, defining routes for `/` and `/about`, and a `Nav` component with `Link` elements for navigation.
+
+---
+
+## 4. References
+
+[1] The Yew Team. (2023). *Yew: A Rust/Wasm framework for building client-side web apps*. Retrieved from https://yew.rs

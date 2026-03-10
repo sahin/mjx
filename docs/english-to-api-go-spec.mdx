@@ -1,6 +1,6 @@
 ---
 title: "English-to-API Engine (Go)"
-description: "Architecture for compiling natural language descriptions of API endpoints and data structures into a high-performance, statically-compiled backend service in Go, with database integration."
+description: "Architecture for compiling natural language API descriptions into high-performance, production-ready Go (Golang) backend services, including database models and handlers."
 ---
 
 # English-to-API Engine (Go): Architecture & Specification
@@ -10,121 +10,125 @@ description: "Architecture for compiling natural language descriptions of API en
 
 ## 1. Introduction
 
-This document specifies the architecture for an **English-to-API Engine**, a system that compiles high-level, natural language descriptions of API resources and endpoints into a complete, high-performance backend service written in Go. The engine generates idiomatic Go code, leveraging the standard library and popular routers like `gorilla/mux` to produce a self-contained, statically-linked binary with no external runtime dependencies.
+This document outlines the architecture for an **English-to-API Engine**, a compiler that translates natural language descriptions of an API's resources and endpoints into a complete, production-ready backend service written in Go. The engine is designed to automate the creation of RESTful APIs, generating idiomatic Go code for data models, HTTP handlers, and server scaffolding. This dramatically reduces the time and effort required to build robust, high-performance backend services.
 
-![A preview of the English-to-API compilation process, showing an IDE with an English prompt and the corresponding generated Go code.](/images/target-api-go.png)
+![A preview of the English-to-API compilation process, showing a terminal with Go code and API testing output.](/images/target-api-go.png)
 
 ### 1.1. Core Problem
 
-Building a backend API in Go, while known for its performance and simplicity, still involves writing significant boilerplate code. For each API resource, a developer must define Go `structs` for data models, write HTTP handler functions for each CRUD operation, set up an HTTP router, and implement JSON serialization/deserialization. This repetitive process slows down the initial phases of development and prototyping.
+Building a backend API, even a simple one, involves a significant amount of boilerplate code. Developers must define data structures, write HTTP handlers for each CRUD (Create, Read, Update, Delete) operation, set up routing, configure a server, and connect to a database. This repetitive work slows down development and is prone to human error.
 
 ### 1.2. Proposed Solution
 
-We propose a compilation pipeline that translates English descriptions of an API's desired functionality directly into a runnable Go application. By using Go as the target, the final output is a single, highly-performant binary that is easy to deploy and scale.
+We propose a compiler that uses English as the source language for defining API specifications. The system follows the standard three-stage pipeline to transform a high-level description into a runnable Go application:
 
-The architecture follows the established three-stage pipeline: Intent Parsing (LLM), Intermediate Representation (IR), and Go Code Generation.
-
----
-
-## 2. System Architecture
-
-The engine is designed as a modular, three-stage pipeline to ensure a clean separation of concerns.
-
-### 2.1. Stage 1: Intent Parsing (LLM)
-
-This stage uses an LLM to understand the user's API requirements from a natural language prompt.
-
--   **Input**: A string of English text. Example: `Create a 'User' API. The user model should have an ID, a name, and an email. The API should have a GET endpoint to list all users and a POST endpoint to create a new user.`
--   **Process**: The LLM parses the text to extract **resources** (`User`), **data models** (`User` struct), and **endpoints** (`GET /users`, `POST /users`).
--   **Output**: A structured representation of the API design.
-
-### 2.2. Stage 2: Intermediate Representation (IR) Generation
-
-This stage converts the LLM's output into a strict, language-agnostic JSON format that serves as the blueprint for the Go application.
-
--   **Input**: The structured API design from the parsing stage.
--   **Process**: A transformation module maps the parsed concepts to a standardized JSON schema.
--   **Output**: A JSON object representing the API. Example IR:
-
-```json
-{
-  "serviceName": "UserService",
-  "models": [
-    { "name": "User", "fields": [
-      { "name": "ID", "type": "int", "json_tag": "id" },
-      { "name": "Name", "type": "string", "json_tag": "name" },
-      { "name": "Email", "type": "string", "json_tag": "email" }
-    ]}
-  ],
-  "endpoints": [
-    { "path": "/users", "method": "GET", "handler": "ListUsers" },
-    { "path": "/users", "method": "POST", "handler": "CreateUser" }
-  ]
-}
-```
-
-### 2.3. Stage 3: Go Code Generation
-
-The final stage generates a complete, runnable Go project from the IR.
-
--   **Input**: The JSON Intermediate Representation.
--   **Process**: The code generator traverses the IR and produces `main.go`, `models.go`, and `handlers.go` files, including server setup, routing, model structs, and stubbed handler functions.
--   **Output**: A directory containing a complete Go project, ready to be built and run (`go run .`).
+1.  **API Description Parsing (LLM)**: An LLM parses the English input to identify API resources, their fields, and the desired endpoints.
+2.  **API IR Generation**: The parsed description is converted into a structured JSON Intermediate Representation that formally defines the API's models and routes.
+3.  **Go Code Generation**: A code generator processes the IR to produce a complete Go project, including model structs, HTTP handlers using the standard library or a framework like Gin, and a main server file.
 
 ---
 
-## 3. Database Integration
+## 2. API Definition Architecture
 
-For most real-world APIs, data needs to be persisted in a database. The English-to-API engine can be extended to support database integration by allowing users to specify database models and relationships in their prompts.
+The system is designed to understand descriptions of API resources and their associated endpoints.
 
-**Example Input**: `"Create a Product API. The Product model should be stored in a PostgreSQL database and have an ID, name, and price."`
+### 2.1. Defining Resources and Endpoints
 
-The LLM would be trained to recognize the `stored in a PostgreSQL database` phrase and add a `database` block to the IR for the `Product` model.
+Users describe their API in terms of resources, fields, and the HTTP methods they should respond to.
+
+**Example Input**: `"Create a User API. The User model should have a name (string) and an email (string). Generate full CRUD endpoints for /users."`
+
+### 2.2. API Intermediate Representation (IR)
+
+The LLM parses this description into a structured IR that defines the API's contract.
 
 ```json
 {
   "models": [
     {
-      "name": "Product",
-      "database": {
-        "type": "postgres",
-        "orm": "gorm"
-      },
+      "name": "User",
       "fields": [
-        { "name": "ID", "type": "uint", "gorm_tag": "primaryKey" },
-        { "name": "Name", "type": "string" },
-        { "name": "Price", "type": "float64" }
+        { "name": "name", "type": "string" },
+        { "name": "email", "type": "string" }
       ]
     }
+  ],
+  "routes": [
+    { "path": "/users", "method": "GET", "handler": "GetUsers" },
+    { "path": "/users", "method": "POST", "handler": "CreateUser" },
+    { "path": "/users/{id}", "method": "GET", "handler": "GetUser" },
+    { "path": "/users/{id}", "method": "PUT", "handler": "UpdateUser" },
+    { "path": "/users/{id}", "method": "DELETE", "handler": "DeleteUser" }
   ]
 }
 ```
 
-The Go code generator would then:
+### 2.3. Go Code Generation
 
-1.  Add the GORM library (`gorm.io/gorm`) as a dependency.
-2.  Generate a `Product` struct with the appropriate GORM tags for primary keys and columns.
-3.  Generate a `database.go` file with functions to initialize the database connection and run auto-migrations.
-4.  Implement the handler functions (e.g., `CreateProduct`, `ListProducts`) with the necessary GORM calls (`db.Create()`, `db.Find()`).
+The code generator uses this IR to produce the complete Go application.
 
-This allows the engine to generate not just the API surface, but also the full data persistence layer from a simple English description.
+-   **Models**: For each model in the IR, a corresponding Go `struct` is created.
+-   **Handlers**: For each route, a Go function is generated to handle the HTTP request and response.
+-   **Server**: A `main.go` file is created to set up the router and start the HTTP server.
+
+```go
+// models/user.go
+package models
+
+type User struct {
+    ID    int    `json:"id"`
+    Name  string `json:"name"`
+    Email string `json:"email"`
+}
+
+// handlers/user_handlers.go
+package handlers
+
+import "net/http"
+
+func GetUsers(w http.ResponseWriter, r *http.Request) {
+    // ... implementation ...
+}
+
+func CreateUser(w http.ResponseWriter, r *http.Request) {
+    // ... implementation ...
+}
+
+// ... other handlers ...
+```
 
 ---
 
-## 4. Real-World Example: A Blog API
+## 3. Database Integration
 
-Let's consider a complete example for a blog.
+Most APIs require a database for persistence. The MJX engine can generate the necessary database integration code, including SQL schemas and query logic.
 
-1.  **User Input**: `"Create a blog API with a Post model. The Post should have an ID, title, and content. Generate full CRUD endpoints for posts."`
+**Example**: `"...and connect it to a PostgreSQL database. Generate the SQL table schema."`
 
-2.  **Intent Parsing & IR Generation**: The system parses this request, identifies the `Post` model and its fields, and understands that "CRUD endpoints" translates to `GET /posts`, `POST /posts`, `GET /posts/{id}`, `PUT /posts/{id}`, and `DELETE /posts/{id}`.
+The IR is augmented with database information:
 
-3.  **Go Code Generation**: The generator produces a complete Go project. The `handlers.go` file would contain five functions:
+```json
+{
+  "database": {
+    "type": "postgresql",
+    "connectionString": "env(DATABASE_URL)"
+  },
+  "models": [
+    // ... as before ...
+  ]
+}
+```
 
-    -   `ListPosts(w http.ResponseWriter, r *http.Request)`
-    -   `CreatePost(w http.ResponseWriter, r *http.Request)`
-    -   `GetPost(w http.ResponseWriter, r *http.Request)`
-    -   `UpdatePost(w http.ResponseWriter, r *http.Request)`
-    -   `DeletePost(w http.ResponseWriter, r *http.Request)`
+The Go code generator will then:
 
-The `main.go` file would set up a router to map the corresponding HTTP methods and paths to these handlers. The `models.go` file would define the `Post` struct. The result is a fully functional REST API, ready to be compiled and deployed, all from a single English sentence.
+1.  Generate a `.sql` file with the `CREATE TABLE` statement.
+2.  Use the `database/sql` package in the Go handlers to connect to the database and execute queries.
+3.  Optionally, integrate with an ORM like GORM or sqlx for more complex database interactions.
+
+This allows the English-to-API engine to generate not just the API surface, but a fully functional, data-driven backend service.
+
+---
+
+## 4. References
+
+[1] Fielding, R. T. (2000). *Architectural Styles and the Design of Network-based Software Architectures*. Doctoral dissertation, University of California, Irvine.

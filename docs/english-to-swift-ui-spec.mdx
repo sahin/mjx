@@ -73,7 +73,58 @@ The final stage takes the structured IR and generates the target SwiftUI code. T
 
 ---
 
-## 3. Connecting to Data & APIs
+## 3. Advanced Layout & Styling
+
+The engine supports a wide range of layout containers and styling modifiers, allowing for the creation of complex and visually rich user interfaces.
+
+### 3.1. Layout Systems
+
+Users can specify layout using natural language terms for SwiftUI's primary containers:
+
+| English Term | SwiftUI Container | Description |
+|---|---|---|
+| `vertical stack`, `column` | `VStack` | Arranges views in a vertical line. |
+| `horizontal stack`, `row` | `HStack` | Arranges views in a horizontal line. |
+| `depth stack`, `Z-stack` | `ZStack` | Overlays views on top of each other. |
+| `grid` | `Grid` / `LazyVGrid` | Arranges views in a two-dimensional grid. |
+| `form` | `Form` | A container for grouping controls used for data entry. |
+| `list` | `List` | A container that presents data in a single column. |
+
+**Example**: `"Create a form with a section for 'Profile'. Inside, have a text field for 'Username' and a toggle for 'Enable Notifications'."`
+
+### 3.2. Styling & Modifiers
+
+The system recognizes a vast vocabulary of styling commands that map directly to SwiftUI modifiers. This includes:
+
+-   **Text Styling**: `font`, `color`, `weight` (bold, light), `alignment`.
+-   **Shape & Background**: `background color`, `corner radius`, `border`, `shadow`.
+-   **Sizing & Spacing**: `frame size` (width, height), `padding`, `spacing`.
+-   **Effects**: `opacity`, `blur`, `saturation`.
+
+**Example**: `"Create a blue button with white text, a corner radius of 10, and a subtle shadow."`
+
+This command would be parsed and translated into the following IR, which the code generator then uses to apply the correct modifiers:
+
+```json
+{
+  "component": "Button",
+  "properties": {
+    "action": "buttonTapped",
+    "style": {
+      "background": "blue",
+      "cornerRadius": 10,
+      "shadow": { "radius": 5, "y": 2 }
+    }
+  },
+  "children": [
+    { "component": "Text", "properties": { "text": "Submit", "color": "white" } }
+  ]
+}
+```
+
+---
+
+## 4. Connecting to Data & APIs
 
 To build dynamic applications, the UI must be able to connect to a data source, whether it's local state or a remote API. The MJX architecture supports this through a data-binding extension to the IR.
 
@@ -112,7 +163,7 @@ This same mechanism can be used to connect to view models that fetch data from a
 
 ---
 
-## 4. Real-World Example: A User Profile Card
+## 5. Real-World Example: A User Profile Card
 
 Let's consider a more complex, real-world example to illustrate the power of the full pipeline.
 
@@ -155,6 +206,6 @@ This demonstrates how a single, high-level English description can be compiled i
 
 ---
 
-## 5. References
+## 6. References
 
 [1] Aho, A. V., Lam, M. S., Sethi, R., & Ullman, J. D. (2007). *Compilers: Principles, Techniques, and Tools*. Addison-Wesley.
