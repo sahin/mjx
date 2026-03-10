@@ -1,0 +1,165 @@
+---
+title: "English-to-API Engine (Go)"
+description: "Architecture for compiling natural language descriptions of API endpoints and data structures into a high-performance, statically-compiled backend service in Go."
+---
+
+# English-to-API Engine (Go): Architecture & Specification
+
+**Author:** Manus AI
+**Date:** March 10, 2026
+
+## 1. Introduction
+
+This document specifies the architecture for an **English-to-API Engine**, a system that compiles high-level, natural language descriptions of API resources and endpoints into a complete, high-performance backend service written in Go. The engine generates idiomatic Go code, leveraging the standard library for HTTP handling and routing to produce a self-contained, statically-linked binary with no external runtime dependencies.
+
+This approach is designed to dramatically accelerate the creation of robust, scalable, and efficient microservices and REST APIs.
+
+### 1.1. Core Problem
+
+Building a backend API in Go, while known for its performance and simplicity, still involves writing significant boilerplate code. For each API resource, a developer must:
+
+-   Define Go `structs` to represent data models and JSON payloads.
+-   Write HTTP handler functions for each CRUD (Create, Read, Update, Delete) operation.
+-   Set up an HTTP router to map URL paths and methods to the correct handlers.
+-   Implement JSON serialization and deserialization for request and response bodies.
+-   Manage server startup and configuration.
+
+This process, while straightforward, is repetitive and can slow down the initial phases of development and prototyping.
+
+### 1.2. Proposed Solution
+
+We propose a compilation pipeline that translates English descriptions of an API's desired functionality directly into a runnable Go application. By using Go as the target, the final output is a single, highly-performant binary that is easy to deploy and scale.
+
+The architecture follows the established three-stage pipeline:
+
+1.  **Intent Parsing (LLM)**: An LLM interprets the English input to identify API resources, endpoints, HTTP methods, and data structures.
+2.  **Intermediate Representation (IR) Generation**: The parsed intent is formalized into a structured JSON format that describes the API contract.
+3.  **Go Code Generation**: A code generator processes the IR to produce all necessary `.go` files for a complete backend service.
+
+---
+
+## 2. System Architecture
+
+The engine is designed as a modular, three-stage pipeline to ensure a clean separation of concerns.
+
+### 2.1. Stage 1: Intent Parsing (LLM)
+
+This stage uses an LLM to understand the user's API requirements from a natural language prompt.
+
+-   **Input**: A string of English text. Example: `Create a 'User' API. The user model should have an ID, a name, and an email. The API should have a GET endpoint to list all users and a POST endpoint to create a new user.`
+-   **Process**: The LLM parses the text to extract:
+    -   **Resources**: `User`
+    -   **Data Models**: `User` struct with `ID`, `name`, `email` fields.
+    -   **Endpoints**: `GET /users`, `POST /users`.
+-   **Output**: A structured representation of the API design.
+
+### 2.2. Stage 2: Intermediate Representation (IR) Generation
+
+This stage converts the LLM's output into a strict, language-agnostic JSON format that serves as the blueprint for the Go application.
+
+-   **Input**: The structured API design from the parsing stage.
+-   **Process**: A transformation module maps the parsed concepts to a standardized JSON schema.
+-   **Output**: A JSON object representing the API. Example IR:
+
+```json
+{
+  "serviceName": "UserService",
+  "models": [
+    {
+      "name": "User",
+      "fields": [
+        { "name": "ID", "type": "int", "json_tag": "id" },
+        { "name": "Name", "type": "string", "json_tag": "name" },
+        { "name": "Email", "type": "string", "json_tag": "email" }
+      ]
+    }
+  ],
+  "endpoints": [
+    {
+      "path": "/users",
+      "method": "GET",
+      "handler": "ListUsers",
+      "responseType": "[]User"
+    },
+    {
+      "path": "/users",
+      "method": "POST",
+      "handler": "CreateUser",
+      "requestType": "User",
+      "responseType": "User"
+    }
+  ]
+}
+```
+
+### 2.3. Stage 3: Go Code Generation
+
+The final stage generates a complete, runnable Go project from the IR.
+
+-   **Input**: The JSON Intermediate Representation.
+-   **Process**: The code generator traverses the IR and produces:
+    1.  **`main.go`**: The main application entry point, including server setup and routing.
+    2.  **`models.go`**: Go `struct` definitions for all models in the IR, with appropriate JSON tags.
+    3.  **`handlers.go`**: Stubbed HTTP handler functions for each endpoint defined in the IR.
+-   **Output**: A directory containing a complete Go project, ready to be built and run (`go run .`).
+
+---
+
+## 3. Intermediate Representation (IR) Specification
+
+The Go API IR is a JSON object that describes the entire service.
+
+| Key | Type | Description |
+| :--- | :--- | :--- |
+| `serviceName` | `String` | The name of the Go service/package. |
+| `models` | `Array` | An array of Model Objects. |
+| `endpoints` | `Array` | An array of Endpoint Objects. |
+
+### 3.1. Model Object Schema
+
+| Key | Type | Description |
+| :--- | :--- | :--- |
+| `name` | `String` | The name of the Go struct (e.g., `User`). |
+| `fields` | `Array` | An array of Field Objects defining the struct's fields. |
+
+### 3.2. Endpoint Object Schema
+
+| Key | Type | Description |
+| :--- | :--- | :--- |
+| `path` | `String` | The URL path (e.g., `/users`). |
+| `method` | `String` | The HTTP method (`GET`, `POST`, etc.). |
+| `handler` | `String` | The name of the Go handler function. |
+| `requestType` | `String` | (Optional) The name of the model struct for the request body. |
+| `responseType`| `String` | (Optional) The name of the model struct for the response body. |
+
+---
+
+## 4. Example Workflow
+
+1.  **User Input**: `Create a simple health check endpoint at /health that returns a 200 OK with the JSON body {'status': 'ok'}.`
+2.  **Intent Parsing**: The LLM identifies a single `GET` endpoint with a specific path and JSON response.
+3.  **IR Generation**:
+
+```json
+{
+  "serviceName": "HealthService",
+  "models": [
+    {
+      "name": "HealthStatus",
+      "fields": [
+        { "name": "Status", "type": "string", "json_tag": "status" }
+      ]
+    }
+  ],
+  "endpoints": [
+    {
+      "path": "/health",
+      "method": "GET",
+      "handler": "HealthCheck",
+      "responseType": "HealthStatus"
+    }
+  ]
+}
+```
+
+4.  **Go Code Generation**: The generator produces the `main.go`, `models.go`, and `handlers.go` files. The `handlers.go` file would contain a `HealthCheck` function that writes the `{'status': 'ok'}` JSON response, and `main.go` would route `/health` to it. The final output is a self-contained Go service.

@@ -1,0 +1,143 @@
+---
+title: "English-to-Chatbot Engine (Rust/WASM)"
+description: "Architecture for compiling natural language descriptions of conversational flows into a high-performance, secure chatbot engine in Rust, deployable to the web via WebAssembly."
+---
+
+# English-to-Chatbot Engine (Rust/WASM): Architecture & Specification
+
+**Author:** Manus AI
+**Date:** March 10, 2026
+
+## 1. Introduction
+
+This document specifies the architecture for an **English-to-Chatbot Engine**, a system that compiles high-level, natural language descriptions of conversational logic into a Rust-based engine. The resulting engine is compiled to WebAssembly (WASM) for secure, high-performance execution in any modern web browser.
+
+This system allows developers and designers to define complex chatbot behaviors—such as dialogue trees, conditional branching, and state management—using simple English. This dramatically accelerates the development of interactive agents, virtual assistants, and conversational support tools for the web.
+
+### 1.1. Core Problem
+
+Building a chatbot traditionally requires expertise in state machine design, natural language understanding (NLU), and frontend integration. Defining conversational flows in code is often verbose, difficult to visualize, and hard for non-technical stakeholders to review. Visual flow-builders exist but often result in vendor lock-in and may not offer the performance or security required for all applications.
+
+### 1.2. Proposed Solution
+
+We propose a compilation pipeline that translates English descriptions of a chatbot's logic into a self-contained Rust-based WebAssembly module. This approach provides several key advantages:
+
+-   **Performance & Safety**: Rust provides memory safety and high performance, which are critical for a responsive user experience.
+-   **Portability**: WebAssembly runs in any modern browser, offering a universal deployment target.
+-   **Accessibility**: Defining logic in English makes the design process accessible to a wider range of team members.
+
+The architecture follows the established three-stage pipeline: Intent Parsing (LLM), Intermediate Representation (IR), and Code Generation.
+
+---
+
+## 2. System Architecture
+
+The engine is composed of three distinct stages that progressively lower the high-level English description into executable Rust code.
+
+### 2.1. Stage 1: Intent Parsing (LLM)
+
+This stage interprets the English input to understand the desired conversational flow.
+
+-   **Input**: A string of English text describing the chatbot's behavior. Example: `"Start with a welcome message 'Hello! How can I help?'. If the user says 'billing', respond with 'What is your billing question?'. If they say 'support', ask 'What is your support issue?'"`
+-   **Process**: The LLM parses the text to identify conversational nodes, user intents (edges), bot responses, and conditional logic.
+-   **Output**: A structured representation of the conversational graph.
+
+### 2.2. Stage 2: Intermediate Representation (IR) Generation
+
+This stage formalizes the parsed intent into a strict JSON format that represents the chatbot as a state machine.
+
+-   **Input**: The structured conversational graph from the LLM.
+-   **Process**: A transformation module converts the graph into a standardized JSON object. This IR defines each conversational state (node) and the transitions (edges) between them based on user input or conditions.
+-   **Output**: A JSON object representing the chatbot state machine. Example IR:
+
+```json
+{
+  "startNode": "welcome",
+  "nodes": {
+    "welcome": {
+      "message": "Hello! How can I help?",
+      "type": "LISTEN",
+      "edges": [
+        { "intent": "billing", "target": "billing_question" },
+        { "intent": "support", "target": "support_question" }
+      ]
+    },
+    "billing_question": {
+      "message": "What is your billing question?",
+      "type": "LISTEN",
+      "edges": []
+    },
+    "support_question": {
+      "message": "What is your support issue?",
+      "type": "LISTEN",
+      "edges": []
+    }
+  }
+}
+```
+
+### 2.3. Stage 3: Rust/WASM Code Generation
+
+The final stage generates a complete Rust project from the IR, ready to be compiled into a WebAssembly module.
+
+-   **Input**: The JSON Intermediate Representation.
+-   **Process**: The code generator traverses the IR and produces:
+    1.  **State Enum**: A Rust `enum` defining all possible nodes in the conversation.
+    2.  **State Machine Logic**: A `struct` representing the chatbot engine, with a method to process user input and transition between states.
+    3.  **WASM Bindings**: Uses `wasm-bindgen` to expose the necessary functions (e.g., `process_input`, `get_current_message`) to JavaScript.
+-   **Output**: A directory containing a complete Rust crate, including `Cargo.toml` and source files, configured for WASM compilation.
+
+---
+
+## 3. Intermediate Representation (IR) Specification
+
+The chatbot IR defines the structure and logic of the conversation as a graph.
+
+| Key | Type | Description |
+| :--- | :--- | :--- |
+| `startNode` | `String` | **Required.** The ID of the initial node when the conversation starts. |
+| `nodes` | `Object` | **Required.** A dictionary where each key is a node ID and the value is a Node Object. |
+
+### 3.1. Node Object Schema
+
+| Key | Type | Description |
+| :--- | :--- | :--- |
+| `message` | `String` | The message the bot displays when entering this node. |
+| `type` | `String` | The type of node. Can be `LISTEN` (waits for user input) or `END` (terminates the conversation). |
+| `edges` | `Array` | An array of Edge Objects defining possible transitions out of this node. |
+
+### 3.2. Edge Object Schema
+
+| Key | Type | Description |
+| :--- | :--- | :--- |
+| `intent` | `String` | The user intent that triggers this transition (e.g., a keyword or classification). |
+| `target` | `String` | The ID of the node to transition to if the intent is matched. |
+
+---
+
+## 4. Example Workflow
+
+1.  **User Input**: `"Ask the user for their name. When they reply, say 'Nice to meet you, [name]!'"`
+2.  **Intent Parsing**: The LLM identifies two states: one to ask for the name, and one to greet the user, capturing the variable.
+3.  **IR Generation**:
+
+```json
+{
+  "startNode": "ask_name",
+  "nodes": {
+    "ask_name": {
+      "message": "What is your name?",
+      "type": "LISTEN",
+      "edges": [
+        { "intent": "*", "target": "greet_user" }
+      ]
+    },
+    "greet_user": {
+      "message": "Nice to meet you, {{input}}!",
+      "type": "END"
+    }
+  }
+}
+```
+
+4.  **Rust/WASM Code Generation**: The generator produces Rust code that implements this two-state machine, including logic to capture the user's input from the first state and interpolate it into the message of the second state. The final output is a `.wasm` module and the associated JavaScript glue code.

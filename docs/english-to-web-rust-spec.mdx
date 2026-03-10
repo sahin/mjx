@@ -1,0 +1,126 @@
+---
+title: "English-to-Web Engine (Rust/WASM)"
+description: "Architecture for compiling natural language descriptions of UI components and application logic into a complete, high-performance web application using Rust and WebAssembly."
+---
+
+# English-to-Web Engine (Rust/WASM): Architecture & Specification
+
+**Author:** Manus AI
+**Date:** March 10, 2026
+
+## 1. Introduction
+
+This document specifies the architecture for an **English-to-Web Engine**, a system that compiles high-level, natural language descriptions of user interfaces and application logic into a complete web application. The engine generates Rust code that is then compiled to WebAssembly (WASM), leveraging a framework like [Yew](https://yew.rs/) or [Dioxus](https://dioxuslabs.com/) to build a high-performance, single-page application (SPA).
+
+This approach enables developers to describe an entire web application—from its UI components to its client-side logic—in plain English, resulting in a secure, fast, and reliable application that runs natively in the browser.
+
+### 1.1. Core Problem
+
+Modern web development, while powerful, is fragmented and complex. Building a web application requires knowledge of HTML, CSS, JavaScript/TypeScript, and a chosen frontend framework (React, Vue, Angular, etc.). While these technologies are mature, the development process involves significant boilerplate, state management complexity, and potential runtime errors due to the dynamic nature of JavaScript.
+
+### 1.2. Proposed Solution
+
+We propose a compilation pipeline that translates English descriptions into a complete, high-performance web application built with Rust and WebAssembly. This offers several key benefits:
+
+-   **Performance**: Rust and WASM deliver near-native speed in the browser, eliminating JavaScript performance bottlenecks.
+-   **Reliability**: Rust's strict compile-time checks prevent a wide class of common bugs, such as null pointer exceptions and race conditions.
+-   **Simplified Toolchain**: The entire application is written in a single language (Rust), simplifying the development and build process.
+
+The architecture follows the established three-stage pipeline: Intent Parsing (LLM), Intermediate Representation (IR), and Code Generation.
+
+---
+
+## 2. System Architecture
+
+The engine is designed as a modular, three-stage pipeline.
+
+### 2.1. Stage 1: Intent Parsing (LLM)
+
+This stage interprets the English input to understand the desired web application structure and behavior.
+
+-   **Input**: A string of English text. Example: `"Create a simple counter app. It should have a heading that shows the current count, initialized to 0. Below it, have two buttons: one to increment the count and one to decrement it."`
+-   **Process**: The LLM parses the text to identify:
+    -   **UI Components**: `Heading`, `Button`
+    -   **State**: A `count` variable.
+    -   **Logic**: `increment` and `decrement` actions that modify the state.
+-   **Output**: A structured representation of the application's components and logic.
+
+### 2.2. Stage 2: Intermediate Representation (IR) Generation
+
+This stage formalizes the parsed intent into a strict JSON format that describes the web application's component tree and state management.
+
+-   **Input**: The structured application design from the LLM.
+-   **Process**: A transformation module converts the design into a standardized JSON object.
+-   **Output**: A JSON object representing the application. Example IR:
+
+```json
+{
+  "appName": "CounterApp",
+  "state": [
+    { "name": "count", "type": "i32", "initialValue": 0 }
+  ],
+  "rootComponent": {
+    "component": "div",
+    "children": [
+      {
+        "component": "h1",
+        "properties": { "text": "{{count}}" }
+      },
+      {
+        "component": "button",
+        "properties": { "text": "+", "onClick": "increment" }
+      },
+      {
+        "component": "button",
+        "properties": { "text": "-", "onClick": "decrement" }
+      }
+    ]
+  },
+  "actions": [
+    { "name": "increment", "logic": "state.count += 1;" },
+    { "name": "decrement", "logic": "state.count -= 1;" }
+  ]
+}
+```
+
+### 2.3. Stage 3: Rust/WASM Code Generation
+
+The final stage generates a complete Rust project using a framework like Yew, ready to be compiled into a WebAssembly-based SPA.
+
+-   **Input**: The JSON Intermediate Representation.
+-   **Process**: The code generator traverses the IR and produces:
+    1.  **`main.rs`**: The main application entry point.
+    2.  **`lib.rs`**: The root application component, including state management and rendering logic.
+    3.  **Component Files**: (Optional) Separate `.rs` files for complex, reusable components.
+    4.  **`index.html`**: The host HTML file to load the WASM module.
+-   **Output**: A directory containing a complete Rust web application project.
+
+---
+
+## 3. Intermediate Representation (IR) Specification
+
+The Web App IR is a JSON object that describes the entire frontend application.
+
+| Key | Type | Description |
+| :--- | :--- | :--- |
+| `appName` | `String` | The name of the Rust crate. |
+| `state` | `Array` | An array of State Objects defining the application's state. |
+| `rootComponent` | `Object` | A Component Object representing the root of the UI tree. |
+| `actions` | `Array` | An array of Action Objects defining the application's logic. |
+
+### 3.1. Component Object Schema
+
+| Key | Type | Description |
+| :--- | :--- | :--- |
+| `component` | `String` | The HTML tag or component name (e.g., `div`, `h1`, `MyComponent`). |
+| `properties`| `Object` | Key-value pairs for the component's attributes (e.g., `text`, `onClick`). |
+| `children` | `Array` | An array of child Component Objects. |
+
+---
+
+## 4. Example Workflow
+
+1.  **User Input**: `"Create a to-do list app. It should have an input field to add new to-do items and a list to display them."`
+2.  **Intent Parsing**: The LLM identifies a state variable for the list of to-dos, an input field, a button, and a list display.
+3.  **IR Generation**: The system produces a JSON IR defining the `todos` state, the UI components, and the `addTodo` action.
+4.  **Rust/WASM Code Generation**: The generator produces the Rust source code for a Yew application. This includes the `App` component with its state and render logic, and the necessary HTML and `Cargo.toml` files. The final output is a complete, compilable web application project.
